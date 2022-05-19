@@ -1,25 +1,51 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { Col, Container, Row } from "react-bootstrap";
 
-function App() {
+import Header from "./containers/Header";
+import { UserProvider } from "./containers/UserContext";
+import ProtectedRoute from "./containers/ProtectedRoute";
+
+const Home = React.lazy(() => import("./pages/Home"));
+const Create = React.lazy(() => import("./pages/Create"));
+const SignIn = React.lazy(() => import("./pages/SignIn"));
+const SignUp = React.lazy(() => import("./pages/SignUp"));
+const SingleTask = React.lazy(() => import("./pages/SingleTask"));
+
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <UserProvider>
+      <Header />
+      <Container>
+        <Row>
+          <Col>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/tweets/:id" element={<SingleTask />} />
+                <Route
+                  path="/create"
+                  element={
+                    <ProtectedRoute>
+                      <Create />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="*" element={<Home />} />
+              </Routes>
+            </React.Suspense>
+          </Col>
+        </Row>
+      </Container>
+    </UserProvider>
   );
 }
-
-export default App;
