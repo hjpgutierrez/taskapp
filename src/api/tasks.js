@@ -41,6 +41,7 @@ function transformTask(item) {
     comments: [],
     likes: 0,
     textCompleted: item.completed ? "Completed" : "Not Completed",
+    completed: item.completed,
   };
 }
 
@@ -57,10 +58,10 @@ export function getTasks(userId) {
   });
 }
 
-export function getTweet({ id }) {
+export function getTask({ id }) {
   return http
-    .get(`/tweets/${id}`)
-    .then(({ data: json }) => transformTweet(json.data));
+    .get(`/tasks/${id}`)
+    .then(({ data: json }) => transformTask(json.data));
 }
 
 export function createTask(payload) {
@@ -69,9 +70,15 @@ export function createTask(payload) {
     .then(({ data: json }) => transformTask(json.data));
 }
 
-export function updateTweet(payload) {
+export function updateTask(payload) {
   const { id } = payload;
   return http
-    .patch(`/tweets/${id}`, payload)
-    .then(({ data: json }) => transformTweet(json.data));
+    .patch(`/tasks/${id}`, payload)
+    .then(({ data: json }) => transformTask(json.data));
+}
+
+export function deleteTask(taskId) {
+  return http
+    .delete(`/tasks/${taskId}`)
+    .then(({ data: json }) => transformTask(json.data));
 }

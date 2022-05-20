@@ -29,7 +29,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/tweets/:id" element={<SingleTask />} />
+                <Route path="/task/:id" element={<SingleTask />} />
                 <Route
                   path="/create"
                   element={

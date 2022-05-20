@@ -1,39 +1,70 @@
-import React from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Button, Form, Spinner } from "react-bootstrap";
 
-import Tweet from "../components/Task";
-import useTweet from "../hooks/useTweet";
-import Comment from "../components/Comment";
+import { deleteTask, updateTask, getTask } from "../api/tasks";
 
 export default function SingleTask() {
-  const params = useParams();
-  const {
-    data,
-    error,
-    loading,
-    actions: { like, comment },
-  } = useTweet({
-    id: params.id,
-  });
+  const { id } = useParams();
 
-  function onLike(event) {
-    event.stopPropagation();
+  const navigate = useNavigate();
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [data, setData] = useState(undefined);
+  const [loading, setLoading] = useState(true);
+  //
+  const handleChange = (event) => {
+    if (event.target.checked) {
+      console.log("✅ Checkbox is checked");
+    } else {
+      console.log("⛔️ Checkbox is NOT checked");
+    }
+    setIsCompleted(event.target.checked);
+  };
 
-    like({ id: data.id });
+  async function loadDetail(taskId) {
+    setLoading(true);
+    try {
+      const response = await getTask(taskId);
+      setIsCompleted(response.completed);
+      setData(response);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+    }
   }
 
-  function onComment(event) {
+  useEffect(() => {
+    loadDetail(id);
+
+    if (id !== undefined) {
+      loadDetail({ id });
+    }
+  }, [id]);
+
+  async function onDelete(event) {
+    event.stopPropagation();
     event.preventDefault();
 
-    const { content } = event.target.elements;
+    await deleteTask(id);
+    navigate("/");
+  }
 
-    comment({
-      content: content.value,
-      tweetId: data.id,
-    });
+  async function onUpdate(event) {
+    event.stopPropagation();
+    event.preventDefault();
 
-    content.value = "";
+    const { description } = event.target.elements;
+
+    try {
+      await updateTask({
+        description: description.value,
+        completed: isCompleted,
+        id: id,
+      });
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   if (loading) {
@@ -46,35 +77,42 @@ export default function SingleTask() {
 
   return (
     <>
-      {error && <Alert variant="danger">{error.message}</Alert>}
-      <Tweet
-        user={data.user}
-        date={data.date}
-        content={data.content}
-        commentsCount={data.commentsCount}
-        likes={data.likes}
-        onLike={onLike}
-      />
-      <Form onSubmit={onComment}>
-        <Form.Group className="mb-3">
-          <Form.Label>Content</Form.Label>
-          <Form.Control as="textarea" name="content" />
-        </Form.Group>
+      {data && (
+        <Form onSubmit={onUpdate}>
+          <Form.Group className="mb-3">
+            <Form.Label>Description</Form.Label>
+            <Form.Control
+              as="textarea"
+              name="description"
+              defaultValue={data.content}
+            />
+          </Form.Group>
 
-        <Button variant="primary" type="submit">
-          Comment
-        </Button>
-      </Form>
-      {data.comments.map(function (item) {
-        return (
-          <Comment
-            key={item._id}
-            user={item.user}
-            content={item.content}
-            date={item.date}
-          />
-        );
-      })}
+          <Form.Group className="mb-3" controlId="formBasicCheckbox">
+            <Form.Check
+              type="checkbox"
+              label="Completed"
+              defaultChecked={isCompleted}
+              onChange={handleChange}
+              id="completed"
+              name="completed"
+            />
+          </Form.Group>
+
+          <Button variant="primary" type="submit">
+            Update
+          </Button>
+
+          <Button
+            variant="danger"
+            type="submit"
+            className="m-3"
+            onClick={onDelete}
+          >
+            Delete
+          </Button>
+        </Form>
+      )}
     </>
   );
 }
